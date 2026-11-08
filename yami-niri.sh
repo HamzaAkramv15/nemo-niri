@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # yami-niri: niri for yami. Upstream niri (a pinned release) plus the patches in patches/, built
 # for this CPU (fat LTO, one codegen unit, target-cpu=native). The packaged niri stays installed
-# as a safety net: the session starts through fork/session.sh, which falls back to it when the
+# as a safety net: the session starts through session.sh, which falls back to it when the
 # fork fails to start. `niri msg` resolves to the fork through ~/.local/bin/niri.
 #
-#   fork/yami-niri.sh build    fetch, patch and build (5–25 min), enable from the next login
-#   fork/yami-niri.sh on       enable an existing build
-#   fork/yami-niri.sh off      back to the packaged niri (from the next login)
-#   fork/yami-niri.sh status   which niri the next login starts
-#   fork/yami-niri.sh clean    drop the sources and build cache (~4 GB), keep the binary
+#   yami-niri.sh build    fetch, patch and build (5–25 min), enable from the next login
+#   yami-niri.sh on       enable an existing build
+#   yami-niri.sh off      back to the packaged niri (from the next login)
+#   yami-niri.sh status   which niri the next login starts
+#   yami-niri.sh clean    drop the sources and build cache (~4 GB), keep the binary
 #
 # Session does not start at all: Ctrl+Alt+F3, log in, `~/.local/lib/yami-niri/yami-niri.sh off`.
 set -euo pipefail
@@ -83,7 +83,7 @@ build() {
 }
 
 on() {
-  [[ -x "$LIB/current/niri" ]] || die "$(t "yami-niri не собран" "yami-niri is not built"): fork/yami-niri.sh build"
+  [[ -x "$LIB/current/niri" ]] || die "$(t "yami-niri не собран" "yami-niri is not built"): yami-niri.sh build"
   mkdir -p "$UNITS" "${LINK%/*}"
   install -m 0755 "$HERE/session.sh" "$LIB/session"
   [[ "$HERE" == "$LIB" ]] || install -m 0755 "$HERE/yami-niri.sh" "$LIB/yami-niri.sh"
