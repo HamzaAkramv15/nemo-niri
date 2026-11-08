@@ -103,8 +103,10 @@ off() {
   # rules only the fork knows would break the packaged niri's config (it would start with its
   # default config, without the shell): the same edit as session.sh's fallback; a running shell
   # keeps them out too from now on (it checks the link below before each write: niri::config_level)
-  local fx="${XDG_CONFIG_HOME:-$HOME/.config}/niri/yami-fx.kdl"
-  [[ -f $fx ]] && sed -i '/allow-tearing/d; /show-only-in/d; s/hide-from /block-out-from /' "$fx"
+  local fx c="${XDG_CONFIG_HOME:-$HOME/.config}"
+  for fx in "$c/yami/niri/rules.kdl" "$c/niri/yami-fx.kdl"; do
+    [[ -f $fx ]] && sed -i '/allow-tearing/d; /show-only-in/d; s/hide-from /block-out-from /' "$fx"
+  done
   [[ "$(readlink "$LINK" 2>/dev/null)" == "$LIB"/* ]] && rm -f -- "$LINK"
   systemctl --user daemon-reload 2>/dev/null || true
   say "$(t "со следующего входа — niri из пакета" "packaged niri from the next login")"

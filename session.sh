@@ -4,9 +4,12 @@
 # the packaged niri takes over, so a broken build never locks you out. Logs: journalctl --user -u niri
 FORK="$HOME/.local/lib/yami-niri/current/niri"
 fallback() {
-    # the packaged niri does not know the fork's window rules: drop them (the shell rewrites the file)
-    fx="${XDG_CONFIG_HOME:-$HOME/.config}/niri/yami-fx.kdl"
-    [ -f "$fx" ] && sed -i '/allow-tearing/d; /show-only-in/d; s/hide-from /block-out-from /' "$fx"
+    # the packaged niri does not know the fork's window rules: drop them from the yami shell's rules
+    # (it rewrites the file; ~/.config/yami/niri/rules.kdl, before yami 3.0 niri/yami-fx.kdl)
+    c="${XDG_CONFIG_HOME:-$HOME/.config}"
+    for fx in "$c/yami/niri/rules.kdl" "$c/niri/yami-fx.kdl"; do
+        [ -f "$fx" ] && sed -i '/allow-tearing/d; /show-only-in/d; s/hide-from /block-out-from /' "$fx"
+    done
     for n in /usr/bin/niri /usr/local/bin/niri; do
         [ -x "$n" ] && { echo "yami-niri: $1, starting $n" >&2; exec "$n" --session; }
     done
