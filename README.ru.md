@@ -67,7 +67,7 @@
 - Патч, который добавляет конфиг, который пишет шелл, поднимает уровень в `VERSION`.
 - Обновление: поднять `NIRI_REV`/`SMITHAY_REV` в `yami-niri.sh`, перебазировать серию в
   `~/.cache/yami/niri-src`, выгрузить заново через
-  `git format-patch -o fork/patches/niri <rev>..yami` (и так же для smithay), собрать, прогнать
+  `git format-patch -o patches/niri <rev>..yami` (и так же для smithay), собрать, прогнать
   `cargo test` в дереве niri, затем проверить вход (Ctrl+Alt+F3 → `yami-niri.sh off`, если
   сломалось).
 - Не взято из angel-niri (прежней основы): бросок стола, трещины стекла, шейдеры-глитчи,

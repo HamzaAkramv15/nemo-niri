@@ -64,7 +64,7 @@ level has it (`show-only-in` from 4, `hide-from` from 5): right after a build th
 - A patch that adds config the shell writes bumps the level in `VERSION`.
 - Updating: bump `NIRI_REV`/`SMITHAY_REV` in `yami-niri.sh`, rebase the series in
   `~/.cache/yami/niri-src`, re-export with
-  `git format-patch -o fork/patches/niri <rev>..yami` (and the same for smithay), build, run
+  `git format-patch -o patches/niri <rev>..yami` (and the same for smithay), build, run
   `cargo test` in the niri tree, then test a login (Ctrl+Alt+F3 → `yami-niri.sh off` if it breaks).
 - Not taken from angel-niri (the previous base): desk throw, glass cracks, glitch shaders, pixel
   overview, clipboard keep, privacy look, stacking with server-side title bars. Minimizing and the
