@@ -4,7 +4,7 @@
 # as a safety net: the session starts through session.sh, which falls back to it when the
 # fork fails to start. `niri msg` resolves to the fork through ~/.local/bin/niri.
 #
-#   yami-niri.sh build    fetch, patch and build (5–25 min), enable from the next login
+#   yami-niri.sh build [--yes]   fetch, patch and build (5–25 min), enable from the next login
 #   yami-niri.sh on       enable an existing build
 #   yami-niri.sh off      back to the packaged niri (from the next login)
 #   yami-niri.sh status   which niri the next login starts
@@ -110,8 +110,16 @@ off() {
   say "$(t "со следующего входа — niri из пакета" "packaged niri from the next login")"
 }
 
+# только у терминала: установщик пишет вывод в журнал и спрашивает сам
+confirm_build() {
+  [[ -t 0 && -t 1 ]] || return 0
+  local a
+  read -r -p "$(t "Собрать niri из исходников (5–25 минут, ~4 ГБ) и включить со следующего входа?" "Build niri from source (5–25 min, ~4 GB) and enable it from the next login?") [y/N] " a || a=n
+  [[ $a =~ ^[yYдД] ]] || { say "$(t "отменено" "cancelled")"; exit 1; }
+}
+
 case "${1:-status}" in
-  build) build ;;
+  build) [[ ${2:-} == --yes ]] || confirm_build; build ;;
   on) on ;;
   off) off ;;
   clean)
