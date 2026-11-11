@@ -6,6 +6,23 @@ Our niri: upstream [niri](https://github.com/YaLTeR/niri) at a pinned release pl
 patch series, built on the machine it runs on. The installer builds and enables it by default;
 the packaged niri stays installed as the fallback.
 
+## Install
+
+On a system with niri and a user systemd session (a recent stable Rust, a C compiler, the build
+dependencies of niri: see its wiki):
+
+```sh
+git clone https://github.com/Trendorin/yami-niri
+cd yami-niri
+./yami-niri.sh build   # 5–25 minutes, ~4 GB of sources and cache; enabled from the next login
+./yami-niri.sh status  # which niri the next login starts
+./yami-niri.sh off     # back to the packaged niri
+```
+
+No root: everything goes into your home. If a session ever does not start: Ctrl+Alt+F3, log in,
+`~/.local/lib/yami-niri/yami-niri.sh off`. The fork reads the same config as niri; without the yami
+shell it is plain niri plus the patches below, which do nothing until a config asks for them.
+
 | What | Where |
 |---|---|
 | `yami-niri.sh build \| on \| off \| status \| clean` | fetch, patch, build, enable from the next login |
@@ -28,8 +45,8 @@ Installed layout: `~/.local/lib/yami-niri/<rev>/niri`, `current` → the live bu
    the next vblank, less input lag. The desktop never tears; a refused async flip falls back to a
    normal one. The shell writes the rule (settings → games) only when it runs on yami-niri.
 3. **Realtime main thread**: `SCHED_RR` 1 with `SCHED_RESET_ON_FORK` when the user may
-   (`RLIMIT_RTPRIO`, e.g. the `realtime`/`audio` group, or `setcap cap_sys_nice=ep` on the binary,
-   which the installer does when needed). A game loading every core no longer makes the cursor and
+   (`RLIMIT_RTPRIO`, e.g. the `realtime`/`audio` group, or `setcap cap_sys_nice=ep` on the binary:
+   `yami-niri.sh on` prints the command, nothing sets it for you). A game loading every core no longer makes the cursor and
    windows stutter. Capabilities are dropped right after; threads and spawned programs start with
    the normal policy. `YAMI_NIRI_RT=0` turns it off.
 
