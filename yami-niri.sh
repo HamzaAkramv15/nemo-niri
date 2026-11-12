@@ -31,8 +31,29 @@ t() { if ((RU)); then printf '%s' "$1"; else printf '%s' "$2"; fi; }
 say() { printf '\e[38;2;196;22;28m▸\e[0m %s\n' "$*"; }
 die() { printf '\e[38;2;255;59;47m✕ %s\e[0m\n' "$*" >&2; exit 1; }
 
-checkout() { # dir repo rev
+# work on the patches lives in these trees (CLAUDE.md, «Fork patch»): a rebuild never throws away
+# edits, files not yet added or a commit that patches/ does not hold (by patch-id; the series' own
+# commits, made by yami@localhost in patch_tree, come from patches/ anyway). YAMI_NIRI_FORCE=1 discards them
+own_work() { # dir patches-dir
+  [[ -d "$1/.git" ]] || return 1
+  [[ -n "$(git -C "$1" status --porcelain 2>/dev/null)" ]] && return 0
+  local have="" p c
+  for p in "$2"/*.patch; do
+    [[ -f $p ]] && have+=" $(git -C "$1" patch-id --stable <"$p" | cut -d' ' -f1)"
+  done
+  while read -r c; do
+    [[ $(git -C "$1" log -1 --format=%ce "$c") == yami@localhost ]] && continue
+    p="$(git -C "$1" show "$c" | git -C "$1" patch-id --stable | cut -d' ' -f1)"
+    [[ -n $p && " $have " == *" $p "* ]] || return 0
+  done < <(git -C "$1" rev-list HEAD --not --remotes 2>/dev/null)
+  return 1
+}
+
+checkout() { # dir repo rev patches-dir
   [[ -d "$1/.git" ]] || git clone --quiet --filter=blob:none "$2" "$1"
+  if [[ ${YAMI_NIRI_FORCE:-} != 1 ]] && own_work "$1" "$4"; then
+    die "$(t "в $1 есть своя работа (правки или коммиты, которых нет в patches/): закоммить и выгрузи её туда (git format-patch) или запусти с YAMI_NIRI_FORCE=1, чтобы её выбросить" "$1 has work of its own (edits or commits that patches/ does not hold): commit it and export it there (git format-patch), or run with YAMI_NIRI_FORCE=1 to throw it away")"
+  fi
   git -C "$1" cat-file -e "$3^{commit}" 2>/dev/null || git -C "$1" fetch --quiet origin
   git -C "$1" am --abort >/dev/null 2>&1 || true
   git -C "$1" checkout --quiet --force -B yami "$3"
@@ -52,8 +73,8 @@ build() {
   command -v clang >/dev/null || die "$(t "нет clang: поставь clang" "clang not found: install clang")"
   mkdir -p "$SRC"
   say "$(t "исходники" "sources"): niri ${NIRI_REV:0:8} (v26.04), smithay ${SMITHAY_REV:0:8}"
-  checkout "$SRC/yami-smithay" "$SMITHAY_REPO" "$SMITHAY_REV"
-  checkout "$SRC/yami-niri" "$NIRI_REPO" "$NIRI_REV"
+  checkout "$SRC/yami-smithay" "$SMITHAY_REPO" "$SMITHAY_REV" "$HERE/patches/smithay"
+  checkout "$SRC/yami-niri" "$NIRI_REPO" "$NIRI_REV" "$HERE/patches/niri"
   patch_tree "$SRC/yami-smithay" "$HERE/patches/smithay"
   patch_tree "$SRC/yami-niri" "$HERE/patches/niri"
   say "$(t "сборка под" "building for") $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs) — $(t "это надолго" "this takes a while")"

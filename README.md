@@ -83,6 +83,8 @@ level has it (`show-only-in` from 4, `hide-from` from 5): right after a build th
   `~/.cache/yami/niri-src`, re-export with
   `git format-patch -o patches/niri <rev>..yami` (and the same for smithay), build, run
   `cargo test` in the niri tree, then test a login (Ctrl+Alt+F3 → `yami-niri.sh off` if it breaks).
+- `build` never throws away work in those trees: uncommitted edits, new files or a commit that
+  `patches/` does not hold (compared by patch-id) stop it; `YAMI_NIRI_FORCE=1` discards them.
 - Not taken from angel-niri (the previous base): desk throw, glass cracks, glitch shaders, pixel
   overview, clipboard keep, privacy look, stacking with server-side title bars. Minimizing and the
   «desk» mode are done by the shell on any niri.
