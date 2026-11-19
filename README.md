@@ -1,4 +1,4 @@
-# yami-niri
+# nemo-niri
 
 English · [Русский](README.ru.md)
 
@@ -12,43 +12,43 @@ On a system with niri and a user systemd session (a recent stable Rust, a C comp
 dependencies of niri: see its wiki):
 
 ```sh
-git clone https://github.com/Trendorin/yami-niri
-cd yami-niri
-./yami-niri.sh build   # 5–25 minutes, ~4 GB of sources and cache; enabled from the next login
-./yami-niri.sh status  # which niri the next login starts
-./yami-niri.sh off     # back to the packaged niri
+git clone https://github.com/HamzaAkramv15/nemo-niri
+cd nemo-niri
+./nemo-niri.sh build   # 5–25 minutes, ~4 GB of sources and cache; enabled from the next login
+./nemo-niri.sh status  # which niri the next login starts
+./nemo-niri.sh off     # back to the packaged niri
 ```
 
 No root: everything goes into your home. If a session ever does not start: Ctrl+Alt+F3, log in,
-`~/.local/lib/yami-niri/yami-niri.sh off`. The fork reads the same config as niri; without the yami
+`~/.local/lib/nemo-niri/nemo-niri.sh off`. The fork reads the same config as niri; without the nemo
 shell it is plain niri plus the patches below, which do nothing until a config asks for them.
 
 | What | Where |
 |---|---|
-| `yami-niri.sh build \| on \| off \| status \| clean` | fetch, patch, build, enable from the next login |
+| `nemo-niri.sh build \| on \| off \| status \| clean` | fetch, patch, build, enable from the next login |
 | `session.sh` | the session's `ExecStart` (systemd drop-in): starts the fork, falls back to the packaged niri if it rejects the config or dies within 15 s |
 | `patches/niri/*.patch` | on top of `NIRI_REV` (v26.04) |
 | `patches/smithay/*.patch` | on top of `SMITHAY_REV` (the rev niri v26.04 pins) |
 
-Installed layout: `~/.local/lib/yami-niri/<rev>/niri`, `current` → the live build, `session`,
-`yami-niri.sh`; `~/.local/bin/niri` → the fork (so `niri msg` matches the compositor);
-`~/.config/systemd/user/niri.service.d/yami-niri.conf`. Sources and the build cache:
-`~/.cache/yami/niri-src` (`yami-niri.sh clean` drops them).
+Installed layout: `~/.local/lib/nemo-niri/<rev>/niri`, `current` → the live build, `session`,
+`nemo-niri.sh`; `~/.local/bin/niri` → the fork (so `niri msg` matches the compositor);
+`~/.config/systemd/user/niri.service.d/nemo-niri.conf`. Sources and the build cache:
+`~/.cache/nemo/niri-src` (`nemo-niri.sh clean` drops them).
 
 ## Patches
 
-1. **Build profile** `yami`: fat LTO, one codegen unit, no debuginfo, `-C target-cpu=native`
+1. **Build profile** `nemo`: fat LTO, one codegen unit, no debuginfo, `-C target-cpu=native`
    (and mold when present). Overflow checks stay on, as upstream.
 2. **Tearing for games** (smithay + niri): window rule `allow-tearing true`. While such a window
    is fullscreen on top of its output and the view is still, a frame that changes nothing but the
    primary plane's buffer is flipped with `DRM_MODE_PAGE_FLIP_ASYNC`: shown at once instead of at
    the next vblank, less input lag. The desktop never tears; a refused async flip falls back to a
-   normal one. The shell writes the rule (settings → games) only when it runs on yami-niri.
+   normal one. The shell writes the rule (settings → games) only when it runs on nemo-niri.
 3. **Realtime main thread**: `SCHED_RR` 1 with `SCHED_RESET_ON_FORK` when the user may
    (`RLIMIT_RTPRIO`, e.g. the `realtime`/`audio` group, or `setcap cap_sys_nice=ep` on the binary:
-   `yami-niri.sh on` prints the command, nothing sets it for you). A game loading every core no longer makes the cursor and
+   `nemo-niri.sh on` prints the command, nothing sets it for you). A game loading every core no longer makes the cursor and
    windows stutter. Capabilities are dropped right after; threads and spawned programs start with
-   the normal policy. `YAMI_NIRI_RT=0` turns it off.
+   the normal policy. `NEMO_NIRI_RT=0` turns it off.
 
 4. **Layer rule `show-only-in`**: the opposite of `block-out-from`. A layer surface with
    `show-only-in "screencast"` (or `"screen-capture"`) is drawn only to those targets, never on
@@ -65,8 +65,8 @@ Installed layout: `~/.local/lib/yami-niri/<rev>/niri`, `current` → the live bu
    layout's sym whenever it was ASCII, and Russian types «.» where US has «/»: `Mod+Shift+/` did
    nothing and `Mod+/` ran the `Mod+.` bind. Latin layouts keep their own labels, as before.
 
-`niri --version` says `26.04-yami.N (<rev>)`, where N is the series level (the number of patches).
-The shell detects the fork by `yami` and writes a fork-only key only when the running build's
+`niri --version` says `26.04-nemo.N (<rev>)`, where N is the series level (the number of patches).
+The shell detects the fork by `nemo` and writes a fork-only key only when the running build's
 level has it (`show-only-in` from 4, `hide-from` from 5): right after a build the old binary runs until the next login.
 
 ## Rules
@@ -75,16 +75,16 @@ level has it (`show-only-in` from 4, `hide-from` from 5): right after a build th
   apply to the pinned revs. No effects or eye candy in the compositor; the shell draws the look.
 - The config must stay valid for the packaged niri too, except for what the shell writes when it
   sees the fork (`allow-tearing`, `show-only-in`, `hide-from`); `session.sh` strips or downgrades
-  them before falling back, and so does `yami-niri.sh off`. The shell writes them only while the next
+  them before falling back, and so does `nemo-niri.sh off`. The shell writes them only while the next
   login runs the fork too (`~/.local/bin/niri` links to the build), so a setting changed after `off`
   does not bring them back.
 - A patch that adds config the shell writes bumps the level in `VERSION`.
-- Updating: bump `NIRI_REV`/`SMITHAY_REV` in `yami-niri.sh`, rebase the series in
-  `~/.cache/yami/niri-src`, re-export with
-  `git format-patch -o patches/niri <rev>..yami` (and the same for smithay), build, run
-  `cargo test` in the niri tree, then test a login (Ctrl+Alt+F3 → `yami-niri.sh off` if it breaks).
+- Updating: bump `NIRI_REV`/`SMITHAY_REV` in `nemo-niri.sh`, rebase the series in
+  `~/.cache/nemo/niri-src`, re-export with
+  `git format-patch -o patches/niri <rev>..nemo` (and the same for smithay), build, run
+  `cargo test` in the niri tree, then test a login (Ctrl+Alt+F3 → `nemo-niri.sh off` if it breaks).
 - `build` never throws away work in those trees: uncommitted edits, new files or a commit that
-  `patches/` does not hold (compared by patch-id) stop it; `YAMI_NIRI_FORCE=1` discards them.
+  `patches/` does not hold (compared by patch-id) stop it; `NEMO_NIRI_FORCE=1` discards them.
 - Not taken from angel-niri (the previous base): desk throw, glass cracks, glitch shaders, pixel
   overview, clipboard keep, privacy look, stacking with server-side title bars. Minimizing and the
   «desk» mode are done by the shell on any niri.

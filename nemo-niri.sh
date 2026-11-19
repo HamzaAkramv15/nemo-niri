@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# yami-niri: niri for yami. Upstream niri (a pinned release) plus the patches in patches/, built
+# nemo-niri: niri for nemo. Upstream niri (a pinned release) plus the patches in patches/, built
 # for this CPU (fat LTO, one codegen unit, target-cpu=native). The packaged niri stays installed
 # as a safety net: the session starts through session.sh, which falls back to it when the
 # fork fails to start. `niri msg` resolves to the fork through ~/.local/bin/niri.
 #
-#   yami-niri.sh build [--yes]   fetch, patch and build (5–25 min), enable from the next login
-#   yami-niri.sh on       enable an existing build
-#   yami-niri.sh off      back to the packaged niri (from the next login)
-#   yami-niri.sh status   which niri the next login starts
-#   yami-niri.sh clean    drop the sources and build cache (~4 GB), keep the binary
+#   nemo-niri.sh build [--yes]   fetch, patch and build (5–25 min), enable from the next login
+#   nemo-niri.sh on       enable an existing build
+#   nemo-niri.sh off      back to the packaged niri (from the next login)
+#   nemo-niri.sh status   which niri the next login starts
+#   nemo-niri.sh clean    drop the sources and build cache (~4 GB), keep the binary
 #
-# Session does not start at all: Ctrl+Alt+F3, log in, `~/.local/lib/yami-niri/yami-niri.sh off`.
+# Session does not start at all: Ctrl+Alt+F3, log in, `~/.local/lib/nemo-niri/nemo-niri.sh off`.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -19,11 +19,11 @@ NIRI_REV="8ed0da44d974c32c6877d2f4630c314da0717ecb" # v26.04
 SMITHAY_REPO="https://github.com/Smithay/smithay.git"
 SMITHAY_REV="ff5fa7df392cecfba049ffed55cdaa4e98a8e7ef" # what niri v26.04 pins
 # .N is the series level (number of patches): the shell writes only config the running niri knows
-VERSION="26.04-yami.6"
-SRC="${YAMI_NIRI_SRC:-${XDG_CACHE_HOME:-$HOME/.cache}/yami/niri-src}"
-LIB="$HOME/.local/lib/yami-niri"
+VERSION="26.04-nemo.6"
+SRC="${NEMO_NIRI_SRC:-${XDG_CACHE_HOME:-$HOME/.cache}/nemo/niri-src}"
+LIB="$HOME/.local/lib/nemo-niri"
 UNITS="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/niri.service.d"
-DROPIN="$UNITS/yami-niri.conf"
+DROPIN="$UNITS/nemo-niri.conf"
 LINK="$HOME/.local/bin/niri"
 
 case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in ru*) RU=1 ;; *) RU=0 ;; esac
@@ -33,7 +33,7 @@ die() { printf '\e[38;2;255;59;47m✕ %s\e[0m\n' "$*" >&2; exit 1; }
 
 # work on the patches lives in these trees (CLAUDE.md, «Fork patch»): a rebuild never throws away
 # edits, files not yet added or a commit that patches/ does not hold (by patch-id; the series' own
-# commits, made by yami@localhost in patch_tree, come from patches/ anyway). YAMI_NIRI_FORCE=1 discards them
+# commits, made by nemo@localhost in patch_tree, come from patches/ anyway). NEMO_NIRI_FORCE=1 discards them
 own_work() { # dir patches-dir
   [[ -d "$1/.git" ]] || return 1
   [[ -n "$(git -C "$1" status --porcelain 2>/dev/null)" ]] && return 0
@@ -42,7 +42,7 @@ own_work() { # dir patches-dir
     [[ -f $p ]] && have+=" $(git -C "$1" patch-id --stable <"$p" | cut -d' ' -f1)"
   done
   while read -r c; do
-    [[ $(git -C "$1" log -1 --format=%ce "$c") == yami@localhost ]] && continue
+    [[ $(git -C "$1" log -1 --format=%ce "$c") == nemo@localhost ]] && continue
     p="$(git -C "$1" show "$c" | git -C "$1" patch-id --stable | cut -d' ' -f1)"
     [[ -n $p && " $have " == *" $p "* ]] || return 0
   done < <(git -C "$1" rev-list HEAD --not --remotes 2>/dev/null)
@@ -51,19 +51,19 @@ own_work() { # dir patches-dir
 
 checkout() { # dir repo rev patches-dir
   [[ -d "$1/.git" ]] || git clone --quiet --filter=blob:none "$2" "$1"
-  if [[ ${YAMI_NIRI_FORCE:-} != 1 ]] && own_work "$1" "$4"; then
-    die "$(t "в $1 есть своя работа (правки или коммиты, которых нет в patches/): закоммить и выгрузи её туда (git format-patch) или запусти с YAMI_NIRI_FORCE=1, чтобы её выбросить" "$1 has work of its own (edits or commits that patches/ does not hold): commit it and export it there (git format-patch), or run with YAMI_NIRI_FORCE=1 to throw it away")"
+  if [[ ${NEMO_NIRI_FORCE:-} != 1 ]] && own_work "$1" "$4"; then
+    die "$(t "в $1 есть своя работа (правки или коммиты, которых нет в patches/): закоммить и выгрузи её туда (git format-patch) или запусти с NEMO_NIRI_FORCE=1, чтобы её выбросить" "$1 has work of its own (edits or commits that patches/ does not hold): commit it and export it there (git format-patch), or run with NEMO_NIRI_FORCE=1 to throw it away")"
   fi
   git -C "$1" cat-file -e "$3^{commit}" 2>/dev/null || git -C "$1" fetch --quiet origin
   git -C "$1" am --abort >/dev/null 2>&1 || true
-  git -C "$1" checkout --quiet --force -B yami "$3"
+  git -C "$1" checkout --quiet --force -B nemo "$3"
   git -C "$1" clean -qfd
 }
 
 patch_tree() { # dir patches-dir
   local p
   for p in "$2"/*.patch; do
-    git -C "$1" -c user.name=yami -c user.email=yami@localhost am --quiet --committer-date-is-author-date "$p" ||
+    git -C "$1" -c user.name=nemo -c user.email=nemo@localhost am --quiet --committer-date-is-author-date "$p" ||
       die "$(t "патч не лёг" "patch does not apply"): ${p#"$HERE"/}"
   done
 }
@@ -73,22 +73,22 @@ build() {
   command -v clang >/dev/null || die "$(t "нет clang: поставь clang" "clang not found: install clang")"
   mkdir -p "$SRC"
   say "$(t "исходники" "sources"): niri ${NIRI_REV:0:8} (v26.04), smithay ${SMITHAY_REV:0:8}"
-  checkout "$SRC/yami-smithay" "$SMITHAY_REPO" "$SMITHAY_REV" "$HERE/patches/smithay"
-  checkout "$SRC/yami-niri" "$NIRI_REPO" "$NIRI_REV" "$HERE/patches/niri"
-  patch_tree "$SRC/yami-smithay" "$HERE/patches/smithay"
-  patch_tree "$SRC/yami-niri" "$HERE/patches/niri"
+  checkout "$SRC/nemo-smithay" "$SMITHAY_REPO" "$SMITHAY_REV" "$HERE/patches/smithay"
+  checkout "$SRC/nemo-niri" "$NIRI_REPO" "$NIRI_REV" "$HERE/patches/niri"
+  patch_tree "$SRC/nemo-smithay" "$HERE/patches/smithay"
+  patch_tree "$SRC/nemo-niri" "$HERE/patches/niri"
   say "$(t "сборка под" "building for") $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs) — $(t "это надолго" "this takes a while")"
   (
-    cd "$SRC/yami-niri"
+    cd "$SRC/nemo-niri"
     export RUSTFLAGS="-C target-cpu=native" NIRI_BUILD_VERSION_STRING="$VERSION ($(git rev-parse --short=8 HEAD))"
     command -v mold >/dev/null && RUSTFLAGS+=" -C link-arg=-fuse-ld=mold"
-    nice cargo build --profile yami --locked
+    nice cargo build --profile nemo --locked
   )
   local rev dir old
-  rev="$(git -C "$SRC/yami-niri" rev-parse --short=8 HEAD)"
+  rev="$(git -C "$SRC/nemo-niri" rev-parse --short=8 HEAD)"
   dir="$LIB/$rev"
   mkdir -p "$dir"
-  install -m 0755 "$SRC/yami-niri/target/yami/niri" "$dir/niri.new"
+  install -m 0755 "$SRC/nemo-niri/target/nemo/niri" "$dir/niri.new"
   mv -f "$dir/niri.new" "$dir/niri"
   local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
   if [[ -f $cfg ]]; then
@@ -104,16 +104,16 @@ build() {
 }
 
 on() {
-  [[ -x "$LIB/current/niri" ]] || die "$(t "yami-niri не собран" "yami-niri is not built"): yami-niri.sh build"
+  [[ -x "$LIB/current/niri" ]] || die "$(t "nemo-niri не собран" "nemo-niri is not built"): nemo-niri.sh build"
   mkdir -p "$UNITS" "${LINK%/*}"
   install -m 0755 "$HERE/session.sh" "$LIB/session"
-  [[ "$HERE" == "$LIB" ]] || install -m 0755 "$HERE/yami-niri.sh" "$LIB/yami-niri.sh"
+  [[ "$HERE" == "$LIB" ]] || install -m 0755 "$HERE/nemo-niri.sh" "$LIB/nemo-niri.sh"
   # NotifyAccess=all: READY=1 comes from niri, a child of the wrapper
-  printf '%s\n' "# yami: the session runs yami-niri, falling back to the packaged niri (off: yami-niri.sh off)" \
+  printf '%s\n' "# nemo: the session runs nemo-niri, falling back to the packaged niri (off: nemo-niri.sh off)" \
     "[Service]" "NotifyAccess=all" "ExecStart=" "ExecStart=$LIB/session" >"$DROPIN"
   ln -sfn "$LIB/current/niri" "$LINK"
   systemctl --user daemon-reload 2>/dev/null || true
-  say "$(t "yami-niri включится со следующего входа" "yami-niri is enabled from the next login") ($("$LINK" --version))"
+  say "$(t "nemo-niri включится со следующего входа" "nemo-niri is enabled from the next login") ($("$LINK" --version))"
   if [[ "$(ulimit -r)" == 0 ]] && ! getcap "$LIB/current/niri" 2>/dev/null | grep -q cap_sys_nice; then
     say "$(t "для realtime-приоритета (плавность под нагрузкой):" "for realtime priority (smooth under load):") sudo setcap cap_sys_nice=ep $(readlink -f "$LIB/current/niri")"
   fi
@@ -125,7 +125,7 @@ off() {
   # default config, without the shell): the same edit as session.sh's fallback; a running shell
   # keeps them out too from now on (it checks the link below before each write: niri::config_level)
   local fx c="${XDG_CONFIG_HOME:-$HOME/.config}"
-  for fx in "$c/yami/niri/rules.kdl" "$c/niri/yami-fx.kdl"; do
+  for fx in "$c/nemo/niri/rules.kdl" "$c/niri/nemo-fx.kdl"; do
     [[ -f $fx ]] && sed -i '/allow-tearing/d; /show-only-in/d; s/hide-from /block-out-from /' "$fx"
   done
   [[ "$(readlink "$LINK" 2>/dev/null)" == "$LIB"/* ]] && rm -f -- "$LINK"
@@ -146,15 +146,15 @@ case "${1:-status}" in
   on) on ;;
   off) off ;;
   clean)
-    # only the trees this script makes: a YAMI_NIRI_SRC pointing at another folder is never removed
+    # only the trees this script makes: a NEMO_NIRI_SRC pointing at another folder is never removed
     for e in "$SRC"/* "$SRC"/.[!.]*; do
       [[ -e $e ]] || continue
-      case ${e##*/} in yami-niri | yami-smithay) ;; *) echo "$(t "не папка исходников yami-niri, не трогаю:" "not a yami-niri source folder, left alone:") $SRC" >&2; exit 1 ;; esac
+      case ${e##*/} in nemo-niri | nemo-smithay) ;; *) echo "$(t "не папка исходников nemo-niri, не трогаю:" "not a nemo-niri source folder, left alone:") $SRC" >&2; exit 1 ;; esac
     done
     rm -rf -- "$SRC" && say "$(t "исходники и кеш сборки удалены" "sources and build cache removed")" ;;
   status)
     if [[ -f $DROPIN ]]; then
-      echo "yami-niri: $("$LIB/current/niri" --version 2>/dev/null || echo "$(t "сломан" "broken")") — $(readlink -f "$LIB/current/niri")"
+      echo "nemo-niri: $("$LIB/current/niri" --version 2>/dev/null || echo "$(t "сломан" "broken")") — $(readlink -f "$LIB/current/niri")"
     else
       echo "$(t "niri из пакета" "packaged niri"): $(command -v niri)"
     fi

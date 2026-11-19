@@ -1,11 +1,11 @@
 From 3857760d37a0b6389ad0ef560c60d8e051f2f503 Mon Sep 17 00:00:00 2001
-From: yami <yami@localhost>
+From: nemo <nemo@localhost>
 Date: Tue, 3 Nov 2026 08:07:43 +0300
-Subject: [PATCH 1/5] yami: build profile and the patched smithay
+Subject: [PATCH 1/5] nemo: build profile and the patched smithay
 
-[profile.yami]: fat LTO, one codegen unit, no debuginfo; built with
--C target-cpu=native by fork/yami-niri.sh. smithay comes from
-../yami-smithay (async page flips).
+[profile.nemo]: fat LTO, one codegen unit, no debuginfo; built with
+-C target-cpu=native by fork/nemo-niri.sh. smithay comes from
+../nemo-smithay (async page flips).
 ---
  Cargo.lock |  2 --
  Cargo.toml | 15 +++++++++++++++
@@ -40,14 +40,14 @@ index fa7164e9..851c7bcf 100644
      ["resources/niri-shutdown.target", "/usr/lib/systemd/user/", "644"],
  ]
 +
-+# yami: smithay with async page flips (tearing for fullscreen games), next to this tree.
++# nemo: smithay with async page flips (tearing for fullscreen games), next to this tree.
 +[patch."https://github.com/Smithay/smithay.git"]
-+smithay = { path = "../yami-smithay" }
-+smithay-drm-extras = { path = "../yami-smithay/smithay-drm-extras" }
++smithay = { path = "../nemo-smithay" }
++smithay-drm-extras = { path = "../nemo-smithay/smithay-drm-extras" }
 +
-+# yami: the build for the machine it runs on — whole-program LTO, one codegen unit,
-+# RUSTFLAGS="-C target-cpu=native" (fork/yami-niri.sh), no debuginfo. Overflow checks stay as upstream.
-+[profile.yami]
++# nemo: the build for the machine it runs on — whole-program LTO, one codegen unit,
++# RUSTFLAGS="-C target-cpu=native" (fork/nemo-niri.sh), no debuginfo. Overflow checks stay as upstream.
++[profile.nemo]
 +inherits = "release"
 +lto = "fat"
 +codegen-units = 1

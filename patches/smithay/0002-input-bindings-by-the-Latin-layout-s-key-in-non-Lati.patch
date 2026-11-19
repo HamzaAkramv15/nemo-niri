@@ -1,5 +1,5 @@
 From 5a6535ca208a7e6c3d8de35c2472fad63ea3dce1 Mon Sep 17 00:00:00 2001
-From: yami <yami@localhost>
+From: nemo <nemo@localhost>
 Date: Sat, 7 Nov 2026 22:23:39 +0300
 Subject: [PATCH 2/2] input: bindings by the Latin layout's key in non-Latin
  layouts
@@ -67,7 +67,7 @@ index 3fa1a7d9..a36abe9a 100644
  #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
  pub struct Layout(pub xkb::LayoutIndex);
  
-+/// yami: whether a layout types Latin letters: the key QWERTY has «A» on (AC01) gives an ASCII
++/// nemo: whether a layout types Latin letters: the key QWERTY has «A» on (AC01) gives an ASCII
 +/// letter there (q in AZERTY, a in Dvorak; ф in Russian, α in Greek).
 +fn is_latin(keymap: &xkb::Keymap, layout: u32) -> bool {
 +    keymap

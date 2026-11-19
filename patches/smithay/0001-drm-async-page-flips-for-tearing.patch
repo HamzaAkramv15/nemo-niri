@@ -1,5 +1,5 @@
 From e074766dbe444634da4b51812e09b5459f3e315c Mon Sep 17 00:00:00 2001
-From: yami <yami@localhost>
+From: nemo <nemo@localhost>
 Date: Tue, 3 Nov 2026 07:55:49 +0300
 Subject: [PATCH 1/2] drm: async page flips for tearing
 
@@ -26,7 +26,7 @@ index 289ce5bf..9df87b39 100644
  }
  
 +impl<B: Buffer, F: Framebuffer> FrameState<B, F> {
-+    /// yami: the primary plane's new framebuffer (and what to wait for before showing
++    /// nemo: the primary plane's new framebuffer (and what to wait for before showing
 +    /// it) when nothing else changed since `previous`: all an async page flip may change.
 +    fn async_flip(
 +        &self,
@@ -62,7 +62,7 @@ index 289ce5bf..9df87b39 100644
      supports_fencing: bool,
      reset_pending: bool,
      signaled_fence: Option<Arc<OwnedFd>>,
-+    // yami: flip async ("tearing") when only the primary plane's buffer changes
++    // nemo: flip async ("tearing") when only the primary plane's buffer changes
 +    allow_tearing: bool,
 +    async_flip_failed: bool,
  
@@ -129,7 +129,7 @@ index 289ce5bf..9df87b39 100644
          self.surface.vrr_supported(conn).map_err(FrameError::DrmError)
      }
  
-+    /// yami: allow async ("tearing") page flips: a frame that changes only the primary
++    /// nemo: allow async ("tearing") page flips: a frame that changes only the primary
 +    /// plane's buffer is shown at once instead of at the next vblank. Atomic surfaces only; a
 +    /// flip the kernel refuses falls back to a normal one, and async flips stay off until this
 +    /// is set again.
@@ -151,7 +151,7 @@ index 318aa9fe..7422cb88 100644
          res
      }
  
-+    /// yami: an async ("tearing") page flip that changes only `plane`'s framebuffer,
++    /// nemo: an async ("tearing") page flip that changes only `plane`'s framebuffer,
 +    /// the only change the kernel takes with `DRM_MODE_PAGE_FLIP_ASYNC`.
 +    pub fn page_flip_async(
 +        &self,
@@ -196,7 +196,7 @@ index 952ef840..d27196a7 100644
          }
      }
  
-+    /// yami: an async ("tearing") page flip of `plane` to `fb`, nothing else changing.
++    /// nemo: an async ("tearing") page flip of `plane` to `fb`, nothing else changing.
 +    ///
 +    /// Atomic surfaces only: a legacy one returns [`Error::UnsupportedPlaneConfiguration`].
 +    #[profiling::function]
